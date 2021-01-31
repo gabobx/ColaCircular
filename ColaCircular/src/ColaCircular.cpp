@@ -8,34 +8,16 @@ public:
 	cola_circular(size_t tamano) :							//El constructor llama a los constructores delegados
 		cola(std::unique_ptr<T[]>(new T[tamano])),			//Puntero inteligente hacia el espacio asignado a la cola, cumple con patron RAII
 		tamano_max(tamano)
-	{
-	}
-
-	void put(T objeto)
-	{
-		std::lock_guard<std::mutex> lock(mutex_);
-
-		cola[inicio] = objeto;
-
-		if(completo)
-		{
-			final = (final + 1) % tamano_max;
-		}
-
-		inicio = (inicio + 1) % tamano_max;
-
-		completo = inicio == final;				//Si al guardar el inicio es igual al final entonces la cola esta llena
-	}
+{
+}
 
 	T get()
 	{
 		std::lock_guard<std::mutex> lock(mutex_);
-
-		if(is_vacia())
+		if(is_vacia())		//Si esta vacía la cola devuelvo un objeto vacío.
 		{
 			return T();
 		}
-
 		//Leo el dato al final de la cola y avanzo el final una posición, queda una posición mas vacía.
 		auto val = cola[final];
 		completo = false;
@@ -44,22 +26,29 @@ public:
 		return val;
 	}
 
-	void reinicio()
+	void put(T objeto)
 	{
 		std::lock_guard<std::mutex> lock(mutex_);
-		completo = false;
-		inicio = final;
+
+		cola[inicio] = objeto;			//Guardo el objeto al inicio de la cola
+
+		if(completo)					//Si esta llena la cola se guarda en la posición final y se avanza el final
+		{
+			final = (final + 1) % tamano_max;
+		}
+		inicio = (inicio + 1) % tamano_max;		//Avanzo el inicio
+		completo = inicio == final;				//Si al guardar el inicio es igual al final entonces la cola esta llena
+	}
+
+	bool is_llena() const
+	{
+		return completo;
 	}
 
 	bool is_vacia() const
 	{
 		//Si inicio y final son iguales y no esta completo es porque esta vacío
 		return (!completo && (inicio == final));
-	}
-
-	bool is_llena() const
-	{
-		return completo;
 	}
 
 	size_t get_tamano() const
@@ -70,7 +59,6 @@ public:
 	size_t get_ocupado() const		//Espacio de la cola get_ocupado
 	{
 		size_t ocupado = tamano_max;
-
 		if(!completo)
 		{
 			if(inicio >= final)
@@ -82,8 +70,14 @@ public:
 				ocupado = tamano_max + inicio - final;
 			}
 		}
-
 		return ocupado;
+	}
+
+	void reinicio()
+	{
+		std::lock_guard<std::mutex> lock(mutex_);
+		completo = false;
+		inicio = final;
 	}
 
 private:

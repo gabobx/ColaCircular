@@ -1,6 +1,11 @@
 #include <mutex>
 #include <cstdio>
 #include <memory>
+# include <stdio.h>
+# include <stdlib.h>
+# include <string.h>
+# include <unistd.h>
+# include <pthread.h>
 
 template <class T>
 class cola_circular {
@@ -89,16 +94,25 @@ private:
 	size_t final = 0;
 };
 
+void *enqueu (void *arg){
+	printf("Thread to enque value in queue");
+
+	return NULL;
+}
+
 int main(void)
 {
+	pthread_t h1;
+	pthread_t h2;
+
+
 	cola_circular<uint32_t> cola(10);		//Creo una cola de tamaño 10
 	printf("Ocupado: %zu, Tamaño total: %zu\n", cola.get_ocupado(), cola.get_tamano());
 
-	for (int var = 0; var < 10; ++var) {
-		printf("Guardo en cola el valor: %d\n", var);
-		cola.put(var);
-	}
-	printf("Cola llena: %d\n", cola.is_llena());
+	pthread_create (&h1,NULL,enqueu,NULL);
+	pthread_join (h1,NULL);
+
+	//printf("Cola llena: %d\n", cola.is_llena());
 	int x = cola.get();
 	printf("Leo primer valor guardado: %d\n", x);
 	printf("Guardado en cola el valor 18 \n");
@@ -109,7 +123,7 @@ int main(void)
 		x = cola.get();
 		printf("Leo siguiente valor guardado: %d\n", x);
 	}
-	printf("Cola vacia: %d\n", cola.is_vacia());
+	//printf("Cola vacia: %d\n", cola.is_vacia());
 
 	return 0;
 }
